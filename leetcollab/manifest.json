@@ -1,0 +1,25 @@
+  {
+    "name": "LeetCollab",
+    "version": "1.0",
+    "description": "Collab with other leetcoders!",
+    "permissions": ["tabs", "*://*.leetcode.com/*"],
+    "externally_connectable": {
+      "matches": ["*://*.leetcode.com/*"]
+    },
+    "background": {
+      "scripts": [
+        "inject.js"
+      ]
+    },
+    "content_scripts": [
+      {
+        "matches": ["*://*.leetcode.com/*"],
+        "js": ["socket.io.js", "codemirror.min.js", "background.js"]
+      }
+    ],
+    "web_accessible_resources": ["inject.js"],
+    "browser_action": {
+      "default_popup": "popup.html"
+     },
+    "manifest_version": 2
+  }
