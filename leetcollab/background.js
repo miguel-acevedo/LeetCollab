@@ -75,4 +75,7 @@ BUTTON: *SHARE*
 -> *LIVE [count of ppl in room]*
 
 If you're not logged in. You can only do read only mode.
+
+Work on figuring out what client's code will be shown. 
+-> Add owner to session. Only do a lazy load update if it's the owner's request.
 */
