@@ -28,27 +28,37 @@ var connect = (sessionId) => {
   // ABOUT TO RECIEVE TEXT
   
   socket.on('message', (data) => {
+      console.log("RECIEVED MSG");
       console.log(data);
-      //window.postMessage({ type: "recieve", text: data }, "*");
+      if (data != null) {
+        console.log("Going to update");
+        window.postMessage({ type: "recieve", text: data }, "*");
+      }
       //editor.value = data
-  })
+  });
   
   socket.on('debug', (data) => {
       console.log(data);
-  })
+  });
 
   window.addEventListener("message", function(event) {
     // ABOUT TO SEND TEXT
     if (event.source != window)
       return;
-  
-    if (event.data.type && (event.data.type == "FROM_PAGE")) {
+    
+    if (event.data.type && (event.data.type == "SEND_MESSAGE")) {
       var value = event.data.text;
       socket.send(value);
       console.log(value);
       //console.log(event.data.text);
       //port.postMessage(event.data.text);
+    } else if (event.data.type && (event.data.type == "INITIAL_MESSAGE")) {
+      var value = event.data.text;
+      console.log("going to emit");
+      console.log(value);
+      socket.emit("initial_message", value);
     }
+
   }, false);
 
 }

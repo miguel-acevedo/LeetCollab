@@ -9,24 +9,24 @@ window.addEventListener("message", function(event) {
     if (event.data.type && (event.data.type == "recieve")) {
         var editor = document.querySelector('.CodeMirror').CodeMirror;
         editor.setValue(event.data.text);
-        //console.log("Im here");
+        // ABTRACT OUT SETTING A MESSAGE ON CLIENT SIDE
     }
   }, false);
 
 setTimeout(function(){
     var editor = document.querySelector('.CodeMirror').CodeMirror;
-    //var value = editor.getValue();
+    var value = editor.getValue();
     
-    //window.postMessage({ type: "FROM_PAGE", text: value }, "*");
-    // ONLY SEND UPDATE WHEN TEXT IS CHANGED.
+    // Intital request. Check if there is a message which should be fetched.
+    window.postMessage({ type: "INITIAL_MESSAGE", text: value }, "*");
 
-    editor.on('change', function(cMirror, details){
+    editor.on('change', function(cMirror, details) {
         if (details.origin == "setValue")
           return;
 
         var value = cMirror.getValue()
         //console.log(value);
-        window.postMessage({ type: "FROM_PAGE", text: value }, "*");
+        window.postMessage({ type: "SEND_MESSAGE", text: value }, "*");
       });
 
-}, 3000);
+}, 2000);
