@@ -18,8 +18,8 @@ setTimeout(function(){
     var value = editor.getValue();
     
     // Intital request. Check if there is a message which should be fetched.
-    window.postMessage({ type: "INITIAL_MESSAGE", text: value }, "*");
-
+    //window.postMessage({ type: "INITIAL_MESSAGE", text: value }, "*");
+    /*
     editor.on('change', function(cMirror, details) {
         if (details.origin == "setValue")
           return;
@@ -28,5 +28,23 @@ setTimeout(function(){
         //console.log(value);
         window.postMessage({ type: "SEND_MESSAGE", text: value }, "*");
       });
+    */
 
-}, 2000);
+   editor.on("change", function (cm, change) {
+    var from = change.from;
+    var text = change.text.join("\n");
+    var removed = change.removed.join("\n");
+    var to =  cm.posFromIndex(cm.indexFromPos(from) + text.length);
+  
+    var before = cm.getRange({ line: 0, ch: 0 }, from);
+    var after = cm.getRange(to, { line: cm.lineCount() + 1, ch: 0 });
+  
+    console.log("after change");
+    console.log(before);
+    console.log(removed);
+    console.log(text);
+    console.log(after);
+    console.log([change.from, change.to]);
+  });
+
+}, 2000); // Make this execute as soon as the editor loads/is reachable.
