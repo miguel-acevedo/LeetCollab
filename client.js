@@ -18,3 +18,4 @@ socket.on('message', (data) => {
 socket.on('debug', (data) => {
     console.log(data);
 })
+
