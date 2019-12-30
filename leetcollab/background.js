@@ -11,7 +11,24 @@ var getParam = (name) => {
   return url.searchParams.get(name);
 }
 
+var changeUrl = (id, socket) => {
+  // store url on load
+  var currentPage = window.location.href;
+
+  // listen for changes
+  setInterval(function()
+  {
+      if (currentPage != window.location.href)
+      {
+          window.history.pushState("", "", '?session=' + id);
+      }
+  }, 500);
+}
+
 var connect = (sessionId) => {
+
+  // Call a function to change all buttons linking to something else to contain the session ID.
+
   var socket = io('http://localhost:3000');
 
   // Join a room by session
@@ -36,6 +53,15 @@ var connect = (sessionId) => {
       }
       //editor.value = data
   });
+
+  socket.on('change_text', (text, start, end) => {
+    window.postMessage({type: "change_text", text: text, start: start, end: end}, "*");
+  });
+
+  socket.on('button_click', (button) => {
+    console.log("recieved a button click request");
+    window.postMessage({type: "button_click", button: button}, "*");
+  });
   
   socket.on('debug', (data) => {
       console.log(data);
@@ -57,9 +83,22 @@ var connect = (sessionId) => {
       console.log("going to emit");
       console.log(value);
       socket.emit("initial_message", value);
+    } else if (event.data.type && (event.data.type == "UPDATE_TEXT")) {
+      var text = event.data.text;
+      var start = event.data.start;
+      var end = event.data.end;
+      var all = event.data.all;
+      console.log(text);
+      socket.emit("update_text", all, text, start, end);
+    } else if (event.data.type && (event.data.type == "BUTTON_CLICK")) {
+      console.log("got here");
+      socket.emit("button_click", event.data.button);
     }
 
   }, false);
+
+  //console.log("loaded");
+  changeUrl(sessionId, socket);
 
 }
 
@@ -69,6 +108,8 @@ console.log(session);
 
 if (session != null) {
   connect(session);
+} else {
+  console.log("No session ID");
 }
 
 
@@ -88,4 +129,6 @@ If you're not logged in. You can only do read only mode.
 
 Work on figuring out what client's code will be shown. 
 -> Add owner to session. Only do a lazy load update if it's the owner's request.
+
+Make it so the editor does not reset itself and go to the beggining. Make it so client does not keep closing automatically.
 */
