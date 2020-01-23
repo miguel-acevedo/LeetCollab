@@ -1,0 +1,4 @@
+.ant-select-dropdown-hidden {
+    visibility: hidden !important;
+    display: block !important;
+}

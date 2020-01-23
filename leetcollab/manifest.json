@@ -2,13 +2,13 @@
     "name": "LeetCollab",
     "version": "1.0",
     "description": "Collab with other leetcoders!",
-    "permissions": ["tabs", "*://*.leetcode.com/*"],
+    "permissions": ["tabs", "*://*.leetcode.com/*", "webRequest", "webRequestBlocking"],
     "externally_connectable": {
       "matches": ["*://*.leetcode.com/*"]
     },
     "background": {
       "scripts": [
-        "inject.js"
+        "inject.js", "desktop.js", "block.js"
       ]
     },
     "content_scripts": [
@@ -17,7 +17,7 @@
         "js": ["socket.io.js", "codemirror.min.js", "background.js"]
       }
     ],
-    "web_accessible_resources": ["inject.js"],
+    "web_accessible_resources": ["inject.js", "desktop.js", "block.js"],
     "browser_action": {
       "default_popup": "popup.html"
      },

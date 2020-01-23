@@ -7,6 +7,7 @@ const port = 3000
 http.listen(port, () => log(`server listening on port: ${port}`))
 
 var recent_message = {};
+var rooms = {};
 
 io.on('connection', (socket) => {
     log('connected')
@@ -42,11 +43,99 @@ io.on('connection', (socket) => {
         // Sends to everyone including the sender.
         io.to(socket.room).emit('message', response);
     });
+    
 
     socket.on('button_click', (button) => {
         log("running");
         socket.broadcast.to(socket.room).emit('button_click', button);
-    })
+    });
+
+    socket.on('language_change', (language, initial) => {
+        log("Changing language");
+        // Add a check to only accept valid names.
+        if (!(socket.room in rooms)) {
+            log("Socket room null");
+            return;
+        }
+
+        log("here");
+        log("intital: " + String(initial))
+        log(rooms[socket.room].language + " client: " + language)
+        if (rooms[socket.room].language == null) {
+            rooms[socket.room].language = language;
+            log("This is first language")
+        } else if (initial == true && language != rooms[socket.room].language) {
+            socket.emit("language_change", rooms[socket.room].language);
+            log("Update senders language")
+        } else if (initial == false && language != rooms[socket.room].language) {
+            rooms[socket.room].language = language;
+            socket.broadcast.to(socket.room).emit("language_change", rooms[socket.room].language);
+            log("Updating new langauge")
+        } else {
+            log(" not doing anythign")
+        }
+        
+    });
+
+    socket.on("console_toggle", (toggle) => {
+        log("console reached");
+        log(toggle);
+        if (socket.room in rooms && toggle != null) {
+            rooms[socket.room].console = toggle;
+            socket.broadcast.to(socket.room).emit('console_toggle', toggle);
+        } else if (socket.room in rooms) {
+            log("default to:" + rooms[socket.room].console)
+            io.to(socket.room).emit('console_toggle', rooms[socket.room].console);
+        } else {
+            // If the console has yet to be opened. Just store it. Later have this done in the begginning.
+            rooms[socket.room] = {
+                "console": false,
+                "tab": null,
+                "text": null,
+                "language": null
+            }
+        }
+    });
+
+    socket.on("tab_toggle", (tab, initial) => {
+        // 0 -> Intial Request
+        // 1 -> Clicked a tab
+        log("tab toggle request");
+        if (socket.room in rooms) {
+            if (rooms[socket.room].tab == null) {
+                rooms[socket.room].tab = tab
+            } else if (initial == true) {
+                socket.emit('tab_toggle', rooms[socket.room].tab);
+                // Send back the current tab to the incoming socket only
+            } else if (initial == false) {
+                rooms[socket.room].tab = tab
+                socket.broadcast.to(socket.room).emit('tab_toggle', rooms[socket.room].tab);
+                // Send an update to all sockets in the room
+            }
+        }
+    });
+
+    socket.on('console_text', (text) => {
+        // If the text in rooms is null, and the input is null. dont do anything.
+        // If text in roooms is not null, and input is null: return the room text
+        // If text in rooms is null and text is not null, just update the rooms text.
+        // if the rooms is not null and and text is not null, send a client update.
+
+        if (socket.room in rooms) {
+            if (rooms[socket.room].text == null && text == null) {
+                // Pass
+            } else if (rooms[socket.room].text != null && text == null) {
+                // Send only to the sender with the text
+                // Only update if there is a mismatch in the future.
+                socket.emit('console_text', rooms[socket.room].text);
+            } else if (rooms[socket.room].text == null && text != null) {
+                rooms[socket.room].text = text // dont do anything.
+            } else if(rooms[socket.room].text != null && text != null) {
+                rooms[socket.room].text = text
+                socket.broadcast.to(socket.room).emit('console_text', text);
+            }
+        }
+    });
 
     socket.on('join', function (room) {
         log("someone has joined the room")

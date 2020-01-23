@@ -25,6 +25,24 @@ var changeUrl = (id, socket) => {
   }, 500);
 }
 
+  function addStyleString(str) {
+    var node = document.createElement('style');
+    node.innerHTML = str;
+    document.body.appendChild(node);
+  }
+
+  addStyleString(".ant-select-dropdown { visibility: hidden; !important }");
+  // Click the change language dropbox twice.
+  // Then make it visible again.
+
+  // Injects script to listen for browser activity.
+  var s = document.createElement('script');
+  s.src = chrome.runtime.getURL('desktop.js');
+  s.onload = function() {
+      this.remove();
+  };
+  (document.head || document.documentElement).appendChild(s);
+
 var connect = (sessionId) => {
 
   // Call a function to change all buttons linking to something else to contain the session ID.
@@ -34,6 +52,7 @@ var connect = (sessionId) => {
   // Join a room by session
   socket.emit('join', sessionId);
 
+  console.log("blocking now");
   // Injects script to listen for browser activity.
   var s = document.createElement('script');
   s.src = chrome.runtime.getURL('inject.js');
@@ -54,6 +73,27 @@ var connect = (sessionId) => {
       //editor.value = data
   });
 
+// Listen for custom input text change, and change it on the editor if it is possible. If not, add it to a cache? 
+  socket.on('console_toggle', (toggle) => {
+    console.log("I TRIED TO TOGGLE CONSOLE");
+    window.postMessage({type: "console_toggle", toggle: toggle }, "*");
+  });
+
+  socket.on('tab_toggle', (tab) => {
+    console.log("Im trying to change the tab");
+    window.postMessage({type: "tab_toggle", tab: tab}, "*");
+  });
+
+  socket.on('language_change', (language) => {
+    console.log("Changing languageChanging languageChanging language");
+    console.log(language);
+    window.postMessage({type: "language_change", language: language}, "*");
+  });
+
+  socket.on('console_text', (text) => {
+    window.postMessage({type: "console_text", text: text}, "*");
+  });
+
   socket.on('change_text', (text, start, end) => {
     window.postMessage({type: "change_text", text: text, start: start, end: end}, "*");
   });
@@ -69,30 +109,44 @@ var connect = (sessionId) => {
 
   window.addEventListener("message", function(event) {
     // ABOUT TO SEND TEXT
-    if (event.source != window)
+    if (event.source != window || !event.data.type)
       return;
     
-    if (event.data.type && (event.data.type == "SEND_MESSAGE")) {
-      var value = event.data.text;
-      socket.send(value);
-      console.log(value);
-      //console.log(event.data.text);
-      //port.postMessage(event.data.text);
-    } else if (event.data.type && (event.data.type == "INITIAL_MESSAGE")) {
-      var value = event.data.text;
-      console.log("going to emit");
-      console.log(value);
-      socket.emit("initial_message", value);
-    } else if (event.data.type && (event.data.type == "UPDATE_TEXT")) {
-      var text = event.data.text;
-      var start = event.data.start;
-      var end = event.data.end;
-      var all = event.data.all;
-      console.log(text);
-      socket.emit("update_text", all, text, start, end);
-    } else if (event.data.type && (event.data.type == "BUTTON_CLICK")) {
-      console.log("got here");
-      socket.emit("button_click", event.data.button);
+    switch (event.data.type) {
+      case "SEND_MESSAGE":
+        var value = event.data.text;
+        socket.send(value);
+        //console.log(value);
+        break;
+      case "INITIAL_MESSAGE":
+        var value = event.data.text;
+        //console.log("going to emit");
+        //console.log(value);
+        socket.emit("initial_message", value);
+        break;
+      case "UPDATE_TEXT":
+        var text = event.data.text;
+        var start = event.data.start;
+        var end = event.data.end;
+        var all = event.data.all;
+        //console.log(text);
+        socket.emit("update_text", all, text, start, end);
+        break;
+      case "BUTTON_CLICK":
+        //console.log("got here");
+        socket.emit("button_click", event.data.button);
+        break;
+      case "CONSOLE_TOGGLE":
+        socket.emit("console_toggle", event.data.toggle);
+        break;
+      case "CONSOLE_TEXT":
+        socket.emit("console_text", event.data.text);
+        break;
+      case "TAB_TOGGLE":
+        socket.emit("tab_toggle", event.data.tab, event.data.initial);
+      case "LANGUAGE_CHANGE":
+        console.log("sending request language");
+        socket.emit("language_change", event.data.language, event.data.initial);
     }
 
   }, false);
@@ -131,4 +185,18 @@ Work on figuring out what client's code will be shown.
 -> Add owner to session. Only do a lazy load update if it's the owner's request.
 
 Make it so the editor does not reset itself and go to the beggining. Make it so client does not keep closing automatically.
+*/
+
+/*
+Maybe ditch the run and submit buttons. And mainly focus on the editor.
+Make it so that you can see another persons cursor using the bookmark on the editor.
+Also also for viewing another's highlighting of a selection using:
+
+editor.markText({line: 6, ch: 26}, {line: 6, ch: 42}, {className: "styled-background"});
+
+Have a flag on the socket. Wether or not the console is currently up. If so, on load open it and change the test cases
+accordingly.
+
+
+
 */
